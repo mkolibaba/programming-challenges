@@ -27,6 +27,8 @@ public class Unit {
      * @param white if true then figure will be white colored, otherwise black
      */
     public Unit(int m, int n, boolean white) {
+        this.m = m;
+        this.n = n;
         try {
             image = ImageIO.read(Game.class.getResourceAsStream(String.format("/figure_%s.png", white ? "white" : "black")));
         } catch (IOException e) {

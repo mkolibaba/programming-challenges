@@ -1,7 +1,13 @@
 package mkolibaba.knightstour;
 
-import javax.swing.*;
-import java.awt.*;
+import javax.swing.JFrame;
+import javax.swing.JOptionPane;
+import java.awt.BorderLayout;
+import java.awt.Canvas;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.Random;
@@ -10,7 +16,7 @@ import java.util.Random;
  * @author Maksim Kolibaba
  * @since 01.06.2019
  */
-public class Game extends Canvas implements Runnable {
+public class Game extends Canvas {
     interface Colors {
         Color LIGHT_TILE_COLOR = new Color(247, 229, 211);
         Color DARK_TILE_COLOR = new Color(106, 63, 20);
@@ -18,29 +24,31 @@ public class Game extends Canvas implements Runnable {
         Color STEPPED_TILE = new Color(214, 214, 214);
     }
 
-    private Random random = new Random();
     private int m, n;
-    private int mRange = 8, nRange = 8;
 
     private int width = 70;
     private int height = 70;
 
     private Unit unit;
 
-    Boolean won; // null means game continues
+    private boolean ended;
 
     public Game() {
-        // TODO: 01.06.2019 add nonsquare boards
-//        m = n = random.nextInt(mRange) + 5;
-        m = n = 5;
-        Dimension dimension = new Dimension(width * m, height * n);
+        Random random = new Random();
+        int mRange = 8;
+        m = random.nextInt(mRange) + 5;
+        int nRange = 8;
+        n = random.nextInt(nRange) + 5;
+    }
 
-        unit = new Unit(m,n,true);
+    public void start() {
+        unit = new Unit(m, n, false);
         unit.setUnitImageScale((int) (width * 0.8), (int) (height * 0.8));
-//        Point start = new Point(random.nextInt(m), random.nextInt(n));
         Point start = new Point(0, 0);
         unit.setPosition(start.x, start.y);
         unit.steppedTiles.add(start);
+
+        Dimension dimension = new Dimension(width * m, height * n);
 
         this.addMouseListener(new MouseAdapter() {
             @Override
@@ -63,24 +71,14 @@ public class Game extends Canvas implements Runnable {
         frame.setVisible(true);
     }
 
-    public void start() {
-        new Thread(this).run();
-    }
-
-    @Override
-    public void run() {
-        repaint();
-    }
-
     private void moveTo(int x, int y) {
-        if (won != null) {
+        Point point = new Point(x, y);
+        if (ended || !unit.getPossibleMovements().contains(point)) {
             return;
         }
-        if (!unit.getPossibleMovements().contains(new Point(x, y))) {
-            return;
-        }
+
         unit.setPosition(x, y);
-        unit.steppedTiles.add(new Point(x, y));
+        unit.steppedTiles.add(point);
         repaint();
 
         if (unit.steppedTiles.size() == m * n) {
