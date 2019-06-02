@@ -1,3 +1,4 @@
 rootProject.name = 'programming-challenges'
 
 include 'fizzbuzz'
+include 'knights-tour'
