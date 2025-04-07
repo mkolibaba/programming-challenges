@@ -54,10 +54,10 @@ func render(game *Game) {
 	// print rods and piles
 	printRodsAndPiles(game)
 	// print moves
-	fmt.Printf("Moves: %d\n", game.moves)
+	fmt.Printf("Moves: %d\n", game.Moves)
 	// print error if it is not nil
-	if game.moveError != nil {
-		fmt.Printf("%sInvalid input:%s %s\n", ColorRed, ColorDefault, game.moveError)
+	if game.MoveError != nil {
+		fmt.Printf("%sInvalid input:%s %s\n", ColorRed, ColorDefault, game.MoveError)
 	}
 }
 
