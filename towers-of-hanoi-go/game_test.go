@@ -1,6 +1,7 @@
 package main_test
 
 import (
+	"errors"
 	"github.com/mkolibaba/programming-challenges/towers-of-hanoi-go"
 	"testing"
 )
@@ -20,29 +21,38 @@ func TestGame(t *testing.T) {
 	t.Run("moving disk to the same rod gives error", func(t *testing.T) {
 		game := main.NewGame()
 
-		game.Move(0, 0)
+		err := game.Move(0, 0)
 
-		if game.MoveError == nil {
+		if err == nil {
 			t.Errorf("should return error when moving disk to the same rod")
+		}
+		if !errors.Is(err, main.ErrMoveSameRod) {
+			t.Errorf("should return error of type ErrMoveSameRod")
 		}
 	})
 	t.Run("moving disk from empty rod", func(t *testing.T) {
 		game := main.NewGame()
 
-		game.Move(1, 0)
+		err := game.Move(1, 0)
 
-		if game.MoveError == nil {
+		if err == nil {
 			t.Errorf("should return error when moving disk from empty rod")
+		}
+		if !errors.Is(err, main.ErrMoveNoDisks) {
+			t.Errorf("should return error of type ErrMoveNoDisks")
 		}
 	})
 	t.Run("moving disk to smaller disks gives error", func(t *testing.T) {
 		game := main.NewGame()
 
 		game.Move(0, 1)
-		game.Move(0, 1)
+		err := game.Move(0, 1)
 
-		if game.MoveError == nil {
+		if err == nil {
 			t.Errorf("should return error when moving disk to smaller disks")
+		}
+		if !errors.Is(err, main.ErrMoveToSmallerDisk) {
+			t.Errorf("should return error of type ErrMoveToSmallerDisk")
 		}
 	})
 	t.Run("should properly track moves", func(t *testing.T) {
@@ -74,6 +84,24 @@ func TestGame(t *testing.T) {
 
 		if !game.IsFinished() {
 			t.Errorf("game should be finished")
+		}
+	})
+	t.Run("should recover from exception", func(t *testing.T) {
+		game := main.NewGame()
+
+		err := game.Move(1, 0)
+
+		if err == nil {
+			t.Errorf("should return error")
+		}
+
+		err = game.Move(0, 1)
+
+		if err != nil {
+			t.Errorf("should recover from error, got %v", err)
+		}
+		if game.Moves != 1 {
+			t.Errorf("should increment moves, got %d", game.Moves)
 		}
 	})
 }

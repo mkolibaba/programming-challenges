@@ -1,7 +1,7 @@
 package main
 
 import (
-	"fmt"
+	"errors"
 	"slices"
 )
 
@@ -13,38 +13,39 @@ const (
 	Large
 )
 
+var (
+	ErrMoveSameRod       = errors.New("moving disk to the same rod is senseless")
+	ErrMoveNoDisks       = errors.New("there is no disks on rod")
+	ErrMoveToSmallerDisk = errors.New("moving disk to smaller disk is forbidden")
+)
+
 type Pile []Disk
 
 type Game struct {
-	Piles     [3]Pile
-	Moves     int
-	MoveError error // TODO: как-то сомнительно
+	Piles [3]Pile
+	Moves int
 }
 
-func (g *Game) Move(from, to int) {
+func (g *Game) Move(from, to int) error {
 	if from == to {
-		g.MoveError = fmt.Errorf("moving disk to the same rod is senseless")
-		return
+		return ErrMoveSameRod
 	}
 
 	fromPile := g.Piles[from]
 	pileTo := g.Piles[to]
 	if len(fromPile) == 0 {
-		g.MoveError = fmt.Errorf("there is no disks on rod %d", from)
-		return
+		return ErrMoveNoDisks
 	}
 
-	// TODO: error processing
 	disk := fromPile[0]
 	if len(pileTo) != 0 && pileTo[0] < disk {
-		g.MoveError = fmt.Errorf("moving disk to smaller disk is forbidden")
-		return
+		return ErrMoveToSmallerDisk
 	}
 
 	g.Piles[from] = fromPile[1:]
 	g.Piles[to] = append(Pile{disk}, pileTo...)
 	g.Moves++
-	g.MoveError = nil
+	return nil
 }
 
 func (g *Game) IsFinished() bool {

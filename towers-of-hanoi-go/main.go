@@ -22,31 +22,38 @@ The rules of the Tower of Hanoi are:
 3. A disk can only be placed on a larger disk or an empty rod.
 Game can be solved in 2^N - 1 moves for N disks.`
 
-// todo: track moves
 // todo: let user define N
-// todo: if user wins in minimal steps, print it
 func main() {
 	game := NewGame()
 	scan := bufio.NewScanner(os.Stdin)
+	var lastError error
 
 	for !game.IsFinished() {
-		render(game)
+		render(game, lastError)
 
 		fmt.Print("Move disk (format '{from} {to}'): ")
 		scan.Scan()
 		input := scan.Text()
 		split := strings.Split(input, " ")
 
-		from, _ := strconv.Atoi(split[0])
-		to, _ := strconv.Atoi(split[1])
+		from, err := strconv.Atoi(split[0])
+		if err != nil {
+			lastError = fmt.Errorf("incorrect input for parameter 'from'")
+			continue
+		}
+		to, err := strconv.Atoi(split[1])
+		if err != nil {
+			lastError = fmt.Errorf("incorrect input for parameter 'to'")
+			continue
+		}
 
-		game.Move(from, to)
+		lastError = game.Move(from, to)
 	}
-	render(game)
+	render(game, lastError)
 	fmt.Println("Game finished. You won!")
 }
 
-func render(game *Game) {
+func render(game *Game, err error) {
 	// clear screen
 	fmt.Print("\033[H\033[2J")
 	// print welcome info
@@ -56,8 +63,8 @@ func render(game *Game) {
 	// print moves
 	fmt.Printf("Moves: %d\n", game.Moves)
 	// print error if it is not nil
-	if game.MoveError != nil {
-		fmt.Printf("%sInvalid input:%s %s\n", ColorRed, ColorDefault, game.MoveError)
+	if err != nil {
+		fmt.Printf("%sInvalid input:%s %s\n", ColorRed, ColorDefault, err)
 	}
 }
 
