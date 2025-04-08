@@ -1,4 +1,4 @@
-package main
+package hanoi
 
 import (
 	"errors"
@@ -11,6 +11,13 @@ const (
 	Small Disk = iota
 	Medium
 	Large
+
+	WelcomeInfo = `Welcome to the game Tower of Hanoi!
+The rules of the Tower of Hanoi are:
+1. You should move all the disks to the last rod.
+2. Only one disk can be moved at a time.
+3. A disk can only be placed on a larger disk or an empty rod.
+Game can be solved in 2^N - 1 moves for N disks.`
 )
 
 var (

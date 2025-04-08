@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"fmt"
+	"github.com/mkolibaba/programming-challenges/towers-of-hanoi-go"
 	"os"
 	"strconv"
 	"strings"
@@ -15,16 +16,9 @@ const (
 	ColorDefault = "\033[0m"
 )
 
-const welcomeInfo = `Welcome to the game Tower of Hanoi!
-The rules of the Tower of Hanoi are:
-1. You should move all the disks to the last rod.
-2. Only one disk can be moved at a time.
-3. A disk can only be placed on a larger disk or an empty rod.
-Game can be solved in 2^N - 1 moves for N disks.`
-
 // todo: let user define N
 func main() {
-	game := NewGame()
+	game := hanoi.NewGame()
 	scan := bufio.NewScanner(os.Stdin)
 	var lastError error
 
@@ -53,11 +47,11 @@ func main() {
 	fmt.Println("Game finished. You won!")
 }
 
-func render(game *Game, err error) {
+func render(game *hanoi.Game, err error) {
 	// clear screen
 	fmt.Print("\033[H\033[2J")
 	// print welcome info
-	fmt.Println(welcomeInfo)
+	fmt.Println(hanoi.WelcomeInfo)
 	// print rods and piles
 	printRodsAndPiles(game)
 	// print moves
@@ -68,7 +62,7 @@ func render(game *Game, err error) {
 	}
 }
 
-func printRodsAndPiles(game *Game) {
+func printRodsAndPiles(game *hanoi.Game) {
 	height := 4
 
 	for i := 0; i < height; i++ {
@@ -88,14 +82,14 @@ func printRodsAndPiles(game *Game) {
 	fmt.Printf("xxxxxxxxxxxxxxxxxxxxxxxxx\n")
 }
 
-func drawDisk(disk Disk) string {
+func drawDisk(disk hanoi.Disk) string {
 
 	switch disk {
-	case Small:
+	case hanoi.Small:
 		return "  " + fmt.Sprintf(ColorRed+"ooo"+ColorDefault) + "  "
-	case Medium:
+	case hanoi.Medium:
 		return " " + fmt.Sprintf(ColorGreen+"ooooo"+ColorDefault) + " "
-	case Large:
+	case hanoi.Large:
 		return fmt.Sprintf(ColorYellow + "ooooooo" + ColorDefault)
 	}
 

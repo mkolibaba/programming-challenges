@@ -1,4 +1,4 @@
-package main_test
+package hanoi_test
 
 import (
 	"errors"
@@ -8,7 +8,7 @@ import (
 
 func TestGame(t *testing.T) {
 	t.Run("game initial state", func(t *testing.T) {
-		game := main.NewGame()
+		game := hanoi.NewGame()
 
 		if game == nil {
 			t.Errorf("game is nil")
@@ -19,31 +19,31 @@ func TestGame(t *testing.T) {
 		}
 	})
 	t.Run("moving disk to the same rod gives error", func(t *testing.T) {
-		game := main.NewGame()
+		game := hanoi.NewGame()
 
 		err := game.Move(0, 0)
 
 		if err == nil {
 			t.Errorf("should return error when moving disk to the same rod")
 		}
-		if !errors.Is(err, main.ErrMoveSameRod) {
+		if !errors.Is(err, hanoi.ErrMoveSameRod) {
 			t.Errorf("should return error of type ErrMoveSameRod")
 		}
 	})
 	t.Run("moving disk from empty rod", func(t *testing.T) {
-		game := main.NewGame()
+		game := hanoi.NewGame()
 
 		err := game.Move(1, 0)
 
 		if err == nil {
 			t.Errorf("should return error when moving disk from empty rod")
 		}
-		if !errors.Is(err, main.ErrMoveNoDisks) {
+		if !errors.Is(err, hanoi.ErrMoveNoDisks) {
 			t.Errorf("should return error of type ErrMoveNoDisks")
 		}
 	})
 	t.Run("moving disk to smaller disks gives error", func(t *testing.T) {
-		game := main.NewGame()
+		game := hanoi.NewGame()
 
 		game.Move(0, 1)
 		err := game.Move(0, 1)
@@ -51,12 +51,12 @@ func TestGame(t *testing.T) {
 		if err == nil {
 			t.Errorf("should return error when moving disk to smaller disks")
 		}
-		if !errors.Is(err, main.ErrMoveToSmallerDisk) {
+		if !errors.Is(err, hanoi.ErrMoveToSmallerDisk) {
 			t.Errorf("should return error of type ErrMoveToSmallerDisk")
 		}
 	})
 	t.Run("should properly track moves", func(t *testing.T) {
-		game := main.NewGame()
+		game := hanoi.NewGame()
 
 		game.Move(0, 2)
 		game.Move(2, 1)
@@ -72,7 +72,7 @@ func TestGame(t *testing.T) {
 		}
 	})
 	t.Run("should win game", func(t *testing.T) {
-		game := main.NewGame()
+		game := hanoi.NewGame()
 
 		game.Move(0, 2)
 		game.Move(0, 1)
@@ -87,7 +87,7 @@ func TestGame(t *testing.T) {
 		}
 	})
 	t.Run("should recover from exception", func(t *testing.T) {
-		game := main.NewGame()
+		game := hanoi.NewGame()
 
 		err := game.Move(1, 0)
 
