@@ -14,9 +14,6 @@ var (
 	colorYellow = createColor(218, 152, 60)
 	colorWhite  = createColor(244, 221, 184)
 
-	rodsXPositioning = []float32{0.2, 0.5, 0.8}
-
-	diskTopY    = platformY - float32(math.Ceil(float64(platformThickness)/2)) - diskHeight*3
 	diskBottomY = platformY - float32(math.Ceil(float64(platformThickness)/2)) - diskHeight
 
 	windowSize = fyne.NewSize(windowWidth, windowHeight)
@@ -33,10 +30,6 @@ const (
 	platformX2        = windowWidth - gap
 	platformY         = float32(200)
 	platformLength    = platformX2 - platformX1
-
-	rodY1        = platformY - diskHeight*4
-	rodY2        = platformY
-	rodThickness = platformThickness * 2 / 3
 
 	diskHeight = float32(40)
 

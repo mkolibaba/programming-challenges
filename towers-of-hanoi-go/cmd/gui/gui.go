@@ -9,11 +9,11 @@ import (
 	"fyne.io/fyne/v2/layout"
 	"fyne.io/fyne/v2/widget"
 	"github.com/mkolibaba/programming-challenges/towers-of-hanoi-go"
-	"image/color"
 )
 
 type GUI struct {
 	game             *hanoi.Game
+	application      fyne.App
 	welcomeInfoLabel *widget.Label
 	movesLabel       *widget.Label
 	infoLabel        *widget.Label
@@ -22,14 +22,17 @@ type GUI struct {
 }
 
 func NewGUI() *GUI {
+	// инициализируем application в самом начале, перед созданием компонентов
+	application := app.New()
 	game := hanoi.NewGame()
 	movesLabel := widget.NewLabel(fmt.Sprintf("Moves: %d", game.Moves))
 	infoLabel := widget.NewLabel("")
 	rods := createRods()
-	disks := createDisks(game, rods) // TODO: get rid of passing rods (maybe)
+	disks := createDisks(game)
 
 	gui := &GUI{
 		game:             game,
+		application:      application,
 		welcomeInfoLabel: widget.NewLabel(hanoi.WelcomeInfo),
 		movesLabel:       movesLabel,
 		infoLabel:        infoLabel,
@@ -44,7 +47,7 @@ func NewGUI() *GUI {
 }
 
 func (gui *GUI) Run() {
-	application := app.New()
+	application := gui.application
 	window := application.NewWindow("Towers of Hanoi")
 
 	header := gui.initializeHeaderContainer()
@@ -59,84 +62,67 @@ func (gui *GUI) Run() {
 	window.ShowAndRun()
 }
 
-func (gui *GUI) MoveDiskOld(err error) {
+func (gui *GUI) finish() {
+	gui.infoLabel.SetText("Game is finished. You won!")
+	for i, _ := range gui.disks {
+		gui.disks[i].Release()
+	}
+}
+
+func (gui *GUI) afterMove(err error) {
 	gui.movesLabel.SetText(fmt.Sprintf("Moves: %d", gui.game.Moves))
 	if err != nil {
 		gui.infoLabel.SetText(fmt.Sprintf("Error: %v", err))
 	} else if gui.game.IsFinished() {
-		gui.infoLabel.SetText("Game is finished. You won!")
-		for i, _ := range gui.disks {
-			gui.disks[i].Release()
-		}
+		gui.finish()
 	} else {
 		gui.infoLabel.SetText("")
 	}
 }
 
-func createRods() []fyne.CanvasObject {
-	rods := make([]fyne.CanvasObject, 3)
+func createRods() (rods []fyne.CanvasObject) {
 	for i := 0; i < 3; i++ {
-		rod := canvas.NewLine(color.Black)
-		rod.StrokeWidth = rodThickness
-		x := platformLength*rodsXPositioning[i] + platformX1
-		rod.Position1 = fyne.NewPos(x, rodY1)
-		rod.Position2 = fyne.NewPos(x, rodY2)
-		rods[i] = rod
+		rods = append(rods, NewRod(i))
 	}
-	return rods
+	return
 }
 
-func createDisks(game *hanoi.Game, rods []fyne.CanvasObject) []*Disk {
-	var disks []*Disk
-
+func createDisks(game *hanoi.Game) (disks []*Disk) {
 	for pileIdx, pile := range game.Piles {
 		for diskIdx, disk := range pile {
-			var clr color.Color
-			var w float32
-			switch disk {
-			case hanoi.Small:
-				clr, w = colorRed, smallDiskWidth
-			case hanoi.Medium:
-				clr, w = colorGreen, mediumDiskWidth
-			case hanoi.Large:
-				clr, w = colorYellow, largeDiskWidth
-			}
 			rect := NewDisk(
-				clr,
-				w,
-				diskHeight,
-				rods[pileIdx].Position().X-w/2,
 				diskBottomY-diskHeight*float32(len(pile)-diskIdx-1),
+				disk,
+				pileIdx,
 			)
 			disks = append(disks, rect)
 		}
 	}
-
-	return disks
+	return
 }
 
 // TODO: переписать метод
 func setOnDragEvent(disk *Disk, gui *GUI) {
-	disk.OnDragEnd = func() bool {
+	disk.OnDragEnd = func() (fyne.Position, bool) {
 		return gui.moveDisk(disk)
 	}
 }
 
-func (gui *GUI) moveDisk(disk *Disk) bool {
-	for i, rod := range gui.rods {
-		if disk.IntersectsWith(rod) {
-			err := gui.game.Move(disk.GetCurrentRod(gui.rods), i)
-			gui.MoveDiskOld(err)
-			if err != nil {
-				return false
-			}
-			x := gui.rods[i].Position().X - disk.Size().Width/2
-			y := diskBottomY - diskHeight*float32(len(gui.game.Piles[i])-1)
-			disk.Move(fyne.NewPos(x, y))
-			return true
+func (gui *GUI) moveDisk(disk *Disk) (fyne.Position, bool) {
+	i, rod := disk.FindRodByCurrentPosition(gui.rods)
+	if i != -1 {
+		err := gui.game.Move(disk.OnRod, i)
+		gui.afterMove(err)
+		if err != nil {
+			return fyne.Position{}, false
 		}
+		x := rod.Position().X - disk.Size().Width/2
+		y := diskBottomY - diskHeight*float32(len(gui.game.Piles[i])-1)
+		disk.OnRod = i
+		return fyne.NewPos(x, y), true
 	}
-	return false
+
+	return fyne.Position{}, false
 }
 
 func (gui *GUI) initializeHeaderContainer() *fyne.Container {
