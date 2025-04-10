@@ -2,12 +2,13 @@ package puzzle_test
 
 import (
 	"github.com/mkolibaba/programming-challenges/sudoku-solver-go/puzzle"
+	"reflect"
 	"testing"
 )
 
 const (
-	unsolvedSudokuFilename = "1.txt"
-	solvedSudokuFilename   = "1_solved.txt"
+	unsolvedSudokuFilename = "test_unsolved.txt"
+	solvedSudokuFilename   = "test_solved.txt"
 	unsolvedSudoku         = `...68..32
 ..6.74...
 ..395....
@@ -93,6 +94,17 @@ func TestSolve(t *testing.T) {
 				t.Errorf("Expected sudoku is solved, got false")
 			}
 		})
+	}
+}
+
+func TestSolvedCorrectly(t *testing.T) {
+	sudoku := puzzle.NewFromFile(unsolvedSudokuFilename)
+	solved := puzzle.NewFromFile(solvedSudokuFilename)
+
+	sudoku.Solve()
+
+	if !reflect.DeepEqual(sudoku, solved) {
+		t.Errorf("invalid solution\ngot:\n%s\nwant:\n%s", sudoku, solved)
 	}
 }
 

@@ -91,8 +91,8 @@ func checkCell(sudoku [][]int, row, column int) bool {
 	// validate square
 	squareRowStart := row / 3 * 3
 	squareColumnStart := column / 3 * 3
-	for i := 3 * squareRowStart; i < squareRowStart+3; i++ {
-		for j := 3 * squareColumnStart; j < squareColumnStart+3; j++ {
+	for i := squareRowStart; i < squareRowStart+3; i++ {
+		for j := squareColumnStart; j < squareColumnStart+3; j++ {
 			if sudoku[i][j] == value && i != row && j != column {
 				return false
 			}
