@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"fmt"
 	"io"
+	"log"
 	"strconv"
 	"strings"
 )
@@ -20,6 +21,26 @@ func NewFromFile(filename string) Sudoku {
 
 func NewFromString(input string) Sudoku {
 	return read(strings.NewReader(input))
+}
+
+func NewFromKaggle(puzzleNo int) Sudoku {
+	file := GetFile("kaggle-sudoku.csv")
+	scanner := bufio.NewScanner(file)
+	for i := 0; i < puzzleNo; i++ {
+		scanner.Scan()
+	}
+	quiz := strings.Split(scanner.Text(), ",")[0]
+	if len(quiz) != 9*9 {
+		log.Fatalf("kaggle puzzle No %d invalid", puzzleNo)
+	}
+	var sudoku = make(Sudoku, 9)
+	for i := 0; i < len(sudoku); i++ {
+		sudoku[i] = make([]int, 9)
+		for j, v := range strings.Split(quiz[i*9:i*9+9], "") {
+			sudoku[i][j] = cellStringToInt(v)
+		}
+	}
+	return sudoku
 }
 
 func (s Sudoku) Solve() {

@@ -8,15 +8,16 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/mkolibaba/programming-challenges/sudoku-solver-go/puzzle"
 	"strings"
+	"sync"
 	"time"
 )
 
 type Model struct {
 	sudoku    puzzle.Sudoku
-	sub       chan struct{}
 	stopwatch stopwatch.Model
 	keyMap    KeyMap
 	help      help.Model
+	done      bool
 }
 
 type KeyMap struct {
@@ -24,11 +25,10 @@ type KeyMap struct {
 	quit  key.Binding
 }
 
-func NewModel(filename string) Model {
+func NewModel(sudoku puzzle.Sudoku) Model {
 	return Model{
-		sudoku:    puzzle.NewFromFile(filename),
-		stopwatch: stopwatch.NewWithInterval(time.Nanosecond),
-		sub:       make(chan struct{}),
+		sudoku:    sudoku,
+		stopwatch: stopwatch.NewWithInterval(time.Microsecond),
 		keyMap: KeyMap{
 			start: key.NewBinding(
 				key.WithKeys("x"),
@@ -52,16 +52,26 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch {
 		case key.Matches(msg, m.keyMap.start):
-			return m, tea.Sequence(
+			var wg sync.WaitGroup
+			wg.Add(1)
+			m.keyMap.start.SetEnabled(false)
+			return m, tea.Batch(
 				m.stopwatch.Start(),
-				createSolveCmd(m),
-				createListenCmd(m),
+				createSolveCmd(m, &wg),
+				createListenCmd(&wg),
 			)
 		case key.Matches(msg, m.keyMap.quit):
 			return m, tea.Quit
 		}
 	case SudokuSolvedMsg:
+		m.done = true
 		return m, m.stopwatch.Stop()
+	case stopwatch.TickMsg:
+		var cmd tea.Cmd
+		m.stopwatch, cmd = m.stopwatch.Update(msg)
+		return m, cmd
+	default:
+		return m, nil
 	}
 	var cmd tea.Cmd
 	m.stopwatch, cmd = m.stopwatch.Update(msg)
@@ -72,7 +82,10 @@ func (m Model) View() string {
 	builder := &strings.Builder{}
 	builder.WriteString(m.sudoku.String())
 
-	fmt.Fprintf(builder, " Elapsed: %s\n", m.stopwatch.View())
+	fmt.Fprintf(builder, "\n Elapsed: %s\n", m.stopwatch.View())
+	if m.done {
+		builder.WriteString(" Done!\n")
+	}
 	builder.WriteString(m.renderHelp())
 	builder.WriteString("\n")
 	return builder.String()
@@ -87,18 +100,19 @@ func (m Model) renderHelp() string {
 
 type SudokuSolvedMsg struct{}
 
-func createSolveCmd(m Model) tea.Cmd {
+func createSolveCmd(m Model, c *sync.WaitGroup) tea.Cmd {
 	return func() tea.Msg {
 		go func() {
+			defer c.Done()
 			m.sudoku.Solve()
-			m.sub <- struct{}{}
 		}()
 		return nil
 	}
 }
 
-func createListenCmd(m Model) tea.Cmd {
+func createListenCmd(c *sync.WaitGroup) tea.Cmd {
 	return func() tea.Msg {
-		return SudokuSolvedMsg(<-m.sub)
+		c.Wait()
+		return SudokuSolvedMsg{}
 	}
 }

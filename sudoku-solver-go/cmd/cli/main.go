@@ -3,12 +3,15 @@ package main
 import (
 	"fmt"
 	"github.com/charmbracelet/bubbletea"
+	"github.com/mkolibaba/programming-challenges/sudoku-solver-go/puzzle"
 	"github.com/mkolibaba/programming-challenges/sudoku-solver-go/render"
 	"os"
 )
 
 func main() {
-	p := tea.NewProgram(render.NewModel("main.txt"))
+	//text := puzzle.NewFromFile("main.txt")
+	kaggle := puzzle.NewFromKaggle(2)
+	p := tea.NewProgram(render.NewModel(kaggle))
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Alas, there's been an error: %v", err)
 		os.Exit(1)
