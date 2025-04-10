@@ -78,8 +78,10 @@ func (m Model) View() string {
 	builder.WriteString(m.sudoku.String())
 
 	if m.sudoku.IsSolved() {
-		builder.WriteString("\n Done!")
-		fmt.Fprintf(builder, "\n Time elapsed: %s\n", m.sudoku.TimeElapsed)
+		builder.WriteString("\n")
+		builder.WriteString(" Done!\n")
+		fmt.Fprintf(builder, " Time elapsed: %s\n", m.sudoku.TimeElapsed)
+		fmt.Fprintf(builder, " Moves: %d\n", m.sudoku.Moves)
 	}
 	builder.WriteString(m.renderHelp())
 	builder.WriteString("\n")

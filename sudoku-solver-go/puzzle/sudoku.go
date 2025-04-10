@@ -20,6 +20,7 @@ const (
 type Sudoku struct {
 	Puzzle      [][]int
 	TimeElapsed time.Duration
+	Moves       int
 	solved      bool
 }
 
@@ -62,7 +63,7 @@ func (s *Sudoku) Solve() {
 	if i == -1 && j == -1 {
 		return
 	}
-	solveNext(s.Puzzle, i, j)
+	s.solveNext(i, j)
 	// end
 	s.TimeElapsed = hrtime.Since(start)
 }
@@ -167,21 +168,22 @@ func toAnyArray(a []int) (r []any) {
 	return
 }
 
-func solveNext(sudoku [][]int, row, column int) bool {
+func (s *Sudoku) solveNext(row, column int) bool {
 	for possibleValue := 1; possibleValue <= 9; possibleValue++ {
-		sudoku[row][column] = possibleValue
-		if checkCell(sudoku, row, column) {
-			i, j := getNextBlank(sudoku)
+		s.Puzzle[row][column] = possibleValue
+		s.Moves++
+		if checkCell(s.Puzzle, row, column) {
+			i, j := getNextBlank(s.Puzzle)
 			if i == -1 && j == -1 {
 				return true
 			}
-			if solveNext(sudoku, i, j) {
+			if s.solveNext(i, j) {
 				return true
 			}
 		}
 	}
 	// ни одно из значений не подходит
-	sudoku[row][column] = 0
+	s.Puzzle[row][column] = 0
 	return false
 }
 
