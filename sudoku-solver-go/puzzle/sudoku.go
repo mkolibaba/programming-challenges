@@ -6,18 +6,21 @@ import (
 	"github.com/loov/hrtime"
 	"io"
 	"log"
+	"math/rand"
 	"strconv"
 	"strings"
 	"time"
 )
 
 const (
-	squaresSeparator = "-------|-------|-------"
+	squaresSeparator   = "-------|-------|-------"
+	kaggleSudokusCount = 1_000_000
 )
 
 type Sudoku struct {
 	Puzzle      [][]int
 	TimeElapsed time.Duration
+	solved      bool
 }
 
 func NewFromFile(filename string) *Sudoku {
@@ -26,6 +29,10 @@ func NewFromFile(filename string) *Sudoku {
 
 func NewFromString(input string) *Sudoku {
 	return read(strings.NewReader(input))
+}
+
+func NewRandomFromKaggle() *Sudoku {
+	return NewFromKaggle(rand.Intn(kaggleSudokusCount))
 }
 
 func NewFromKaggle(puzzleNo int) *Sudoku {
@@ -61,6 +68,10 @@ func (s *Sudoku) Solve() {
 }
 
 func (s *Sudoku) IsSolved() bool {
+	if s.solved {
+		return true
+	}
+
 	for i := 0; i < 9; i++ {
 		for j := 0; j < 9; j++ {
 			if !checkCell(s.Puzzle, i, j) {
@@ -68,6 +79,7 @@ func (s *Sudoku) IsSolved() bool {
 			}
 		}
 	}
+	s.solved = true
 	return true
 }
 
