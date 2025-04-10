@@ -3,27 +3,32 @@ package puzzle
 import (
 	"bufio"
 	"fmt"
+	"github.com/loov/hrtime"
 	"io"
 	"log"
 	"strconv"
 	"strings"
+	"time"
 )
 
 const (
 	squaresSeparator = "-------|-------|-------"
 )
 
-type Sudoku [][]int
+type Sudoku struct {
+	Puzzle      [][]int
+	TimeElapsed time.Duration
+}
 
-func NewFromFile(filename string) Sudoku {
+func NewFromFile(filename string) *Sudoku {
 	return read(GetFile(filename))
 }
 
-func NewFromString(input string) Sudoku {
+func NewFromString(input string) *Sudoku {
 	return read(strings.NewReader(input))
 }
 
-func NewFromKaggle(puzzleNo int) Sudoku {
+func NewFromKaggle(puzzleNo int) *Sudoku {
 	file := GetFile("kaggle-sudoku.csv")
 	scanner := bufio.NewScanner(file)
 	for i := 0; i < puzzleNo; i++ {
@@ -33,28 +38,32 @@ func NewFromKaggle(puzzleNo int) Sudoku {
 	if len(quiz) != 9*9 {
 		log.Fatalf("kaggle puzzle No %d invalid", puzzleNo)
 	}
-	var sudoku = make(Sudoku, 9)
+	var sudoku = make([][]int, 9)
 	for i := 0; i < len(sudoku); i++ {
 		sudoku[i] = make([]int, 9)
 		for j, v := range strings.Split(quiz[i*9:i*9+9], "") {
 			sudoku[i][j] = cellStringToInt(v)
 		}
 	}
-	return sudoku
+	return &Sudoku{Puzzle: sudoku}
 }
 
-func (s Sudoku) Solve() {
-	i, j := getNextBlank(s)
+func (s *Sudoku) Solve() {
+	start := hrtime.Now()
+	// start
+	i, j := getNextBlank(s.Puzzle)
 	if i == -1 && j == -1 {
 		return
 	}
-	solveNext(s, i, j)
+	solveNext(s.Puzzle, i, j)
+	// end
+	s.TimeElapsed = hrtime.Since(start)
 }
 
-func (s Sudoku) IsSolved() bool {
+func (s *Sudoku) IsSolved() bool {
 	for i := 0; i < 9; i++ {
 		for j := 0; j < 9; j++ {
-			if !checkCell(s, i, j) {
+			if !checkCell(s.Puzzle, i, j) {
 				return false
 			}
 		}
@@ -62,9 +71,9 @@ func (s Sudoku) IsSolved() bool {
 	return true
 }
 
-func (s Sudoku) String() string {
+func (s *Sudoku) String() string {
 	builder := &strings.Builder{}
-	for rowIdx, row := range s {
+	for rowIdx, row := range s.Puzzle {
 		builder.WriteString(fmt.Sprintf(" %v %v %v | %v %v %v | %v %v %v ", toAnyArray(row)...))
 		builder.WriteString("\n")
 		if rowIdx == 2 || rowIdx == 5 {
@@ -74,7 +83,8 @@ func (s Sudoku) String() string {
 	return builder.String()
 }
 
-func read(r io.Reader) (sudoku Sudoku) {
+func read(r io.Reader) *Sudoku {
+	var sudoku [][]int
 	scanner := bufio.NewScanner(r)
 
 	for scanner.Scan() {
@@ -85,7 +95,7 @@ func read(r io.Reader) (sudoku Sudoku) {
 		sudoku = append(sudoku, row)
 	}
 
-	return sudoku
+	return &Sudoku{Puzzle: sudoku}
 }
 
 func checkCell(sudoku [][]int, row, column int) bool {

@@ -15,7 +15,7 @@ const invalidSudoku = `149685732
 func TestCheckCell(t *testing.T) {
 	sudoku := NewFromString(invalidSudoku)
 
-	if checkCell(sudoku, 1, 8) {
+	if checkCell(sudoku.Puzzle, 1, 8) {
 		t.Errorf("want check cell is false, got true")
 	}
 }

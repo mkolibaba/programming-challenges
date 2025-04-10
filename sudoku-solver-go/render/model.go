@@ -13,7 +13,7 @@ import (
 )
 
 type Model struct {
-	sudoku    puzzle.Sudoku
+	sudoku    *puzzle.Sudoku
 	stopwatch stopwatch.Model
 	keyMap    KeyMap
 	help      help.Model
@@ -25,7 +25,7 @@ type KeyMap struct {
 	quit  key.Binding
 }
 
-func NewModel(sudoku puzzle.Sudoku) Model {
+func NewModel(sudoku *puzzle.Sudoku) Model {
 	return Model{
 		sudoku:    sudoku,
 		stopwatch: stopwatch.NewWithInterval(time.Microsecond),
@@ -82,9 +82,9 @@ func (m Model) View() string {
 	builder := &strings.Builder{}
 	builder.WriteString(m.sudoku.String())
 
-	fmt.Fprintf(builder, "\n Elapsed: %s\n", m.stopwatch.View())
 	if m.done {
-		builder.WriteString(" Done!\n")
+		builder.WriteString("\n Done!")
+		fmt.Fprintf(builder, "\n Time elapsed: %s\n", m.sudoku.TimeElapsed)
 	}
 	builder.WriteString(m.renderHelp())
 	builder.WriteString("\n")
@@ -92,7 +92,7 @@ func (m Model) View() string {
 }
 
 func (m Model) renderHelp() string {
-	return "\n" + m.help.ShortHelpView([]key.Binding{
+	return "\n " + m.help.ShortHelpView([]key.Binding{
 		m.keyMap.start,
 		m.keyMap.quit,
 	})

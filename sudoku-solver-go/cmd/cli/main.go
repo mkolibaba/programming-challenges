@@ -5,12 +5,13 @@ import (
 	"github.com/charmbracelet/bubbletea"
 	"github.com/mkolibaba/programming-challenges/sudoku-solver-go/puzzle"
 	"github.com/mkolibaba/programming-challenges/sudoku-solver-go/render"
+	"math/rand"
 	"os"
 )
 
 func main() {
 	//text := puzzle.NewFromFile("main.txt")
-	kaggle := puzzle.NewFromKaggle(2)
+	kaggle := puzzle.NewFromKaggle(rand.Intn(1_000_000))
 	p := tea.NewProgram(render.NewModel(kaggle))
 	if _, err := p.Run(); err != nil {
 		fmt.Printf("Alas, there's been an error: %v", err)
