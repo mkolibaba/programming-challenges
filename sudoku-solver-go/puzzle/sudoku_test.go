@@ -1,13 +1,14 @@
-package puzzle
+package puzzle_test
 
 import (
+	"github.com/mkolibaba/programming-challenges/sudoku-solver-go/puzzle"
 	"testing"
 )
 
 const (
-	unsolvedSudokuPath = "../input/1.txt"
-	solvedSudokuPath   = "../input/1_solved.txt"
-	unsolvedSudoku     = `...68..32
+	unsolvedSudokuFilename = "1.txt"
+	solvedSudokuFilename   = "1_solved.txt"
+	unsolvedSudoku         = `...68..32
 ..6.74...
 ..395....
 .7....9..
@@ -27,39 +28,31 @@ type Cell struct {
 	row, column int
 }
 
+func TestPrettyPrint(t *testing.T) {
+	sudoku := puzzle.NewFromFile(unsolvedSudokuFilename)
+
+	t.Logf("\n%s", sudoku)
+}
+
 func TestReadFromFile(t *testing.T) {
-	sudoku := ReadFromFile(unsolvedSudokuPath)
+	sudoku := puzzle.NewFromFile(unsolvedSudokuFilename)
 
 	assertValidSudoku(t, sudoku)
 }
 
 func TestReadFromString(t *testing.T) {
-	sudoku := readFromString(unsolvedSudoku)
+	sudoku := puzzle.NewFromString(unsolvedSudoku)
 
 	assertValidSudoku(t, sudoku)
-}
-
-func TestCheckCell(t *testing.T) {
-	sudoku := ReadFromFile(solvedSudokuPath)
-
-	assertValidSudoku(t, sudoku)
-
-	for i := 0; i < 9; i++ {
-		for j := 0; j < 9; j++ {
-			if !checkCell(sudoku, i, j) {
-				t.Errorf("Expected cell [%d][%d] is solved, got false", i, j)
-			}
-		}
-	}
 }
 
 func TestSolved(t *testing.T) {
 	t.Run("check solved sudoku", func(t *testing.T) {
-		sudoku := ReadFromFile(solvedSudokuPath)
+		sudoku := puzzle.NewFromFile(solvedSudokuFilename)
 
 		assertValidSudoku(t, sudoku)
 
-		if !solved(sudoku) {
+		if !sudoku.IsSolved() {
 			t.Errorf("Expected sudoku is solved, got false")
 		}
 	})
@@ -68,7 +61,7 @@ func TestSolved(t *testing.T) {
 func TestSolve(t *testing.T) {
 	cases := []struct {
 		name   string
-		sudoku [][]int
+		sudoku puzzle.Sudoku
 	}{
 		{
 			"solved sudoku is solved",
@@ -88,48 +81,25 @@ func TestSolve(t *testing.T) {
 		},
 		{
 			"solve brand new sudoku",
-			ReadFromFile(unsolvedSudokuPath),
+			puzzle.NewFromFile(unsolvedSudokuFilename),
 		},
 	}
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			solve(c.sudoku)
+			c.sudoku.Solve()
 
-			if !solved(c.sudoku) {
+			if !c.sudoku.IsSolved() {
 				t.Errorf("Expected sudoku is solved, got false")
 			}
 		})
 	}
 }
 
-func TestGetNextBlank(t *testing.T) {
-	t.Run("should find next blank", func(t *testing.T) {
-		blankRow := 0
-		blankColumn := 2
-		sudoku := punchCellsFromSolved(Cell{blankRow, blankColumn})
-
-		i, j := getNextBlank(sudoku)
-
-		if i != blankRow || j != blankColumn {
-			t.Errorf("Expected (%d, %d) as next blank cell, got (%d, %d)", blankRow, blankColumn, i, j)
-		}
-	})
-	t.Run("should find next blank when no blank", func(t *testing.T) {
-		sudoku := punchCellsFromSolved()
-
-		i, j := getNextBlank(sudoku)
-
-		if i != -1 || j != -1 {
-			t.Errorf("Expected (-1, -1) as next blank cell, got (%d, %d)", i, j)
-		}
-	})
-}
-
 func BenchmarkSolve(b *testing.B) {
 	for b.Loop() {
-		sudoku := readFromString(unsolvedSudoku)
-		solve(sudoku)
+		sudoku := puzzle.NewFromString(unsolvedSudoku)
+		sudoku.Solve()
 	}
 }
 
@@ -155,7 +125,7 @@ func assertValidSudoku(t *testing.T, sudoku [][]int) {
 }
 
 func punchCellsFromSolved(cells ...Cell) [][]int {
-	sudoku := ReadFromFile(solvedSudokuPath)
+	sudoku := puzzle.NewFromFile(solvedSudokuFilename)
 
 	for _, c := range cells {
 		sudoku[c.row][c.column] = 0

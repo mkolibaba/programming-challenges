@@ -4,26 +4,56 @@ import (
 	"bufio"
 	"fmt"
 	"io"
-	"log"
-	"os"
 	"strconv"
 	"strings"
 )
 
-func ReadFromFile(path string) [][]int {
-	file, err := os.Open(path)
-	if err != nil {
-		log.Fatal(err)
+const (
+	squaresSeparator = "-------|-------|-------"
+)
+
+type Sudoku [][]int
+
+func NewFromFile(filename string) Sudoku {
+	return read(GetFile(filename))
+}
+
+func NewFromString(input string) Sudoku {
+	return read(strings.NewReader(input))
+}
+
+func (s Sudoku) Solve() {
+	i, j := getNextBlank(s)
+	if i == -1 && j == -1 {
+		return
 	}
-
-	return read(file)
+	solveNext(s, i, j)
 }
 
-func readFromString(s string) [][]int {
-	return read(strings.NewReader(s))
+func (s Sudoku) IsSolved() bool {
+	for i := 0; i < 9; i++ {
+		for j := 0; j < 9; j++ {
+			if !checkCell(s, i, j) {
+				return false
+			}
+		}
+	}
+	return true
 }
 
-func read(r io.Reader) (sudoku [][]int) {
+func (s Sudoku) String() string {
+	builder := &strings.Builder{}
+	for rowIdx, row := range s {
+		builder.WriteString(fmt.Sprintf(" %v %v %v | %v %v %v | %v %v %v ", toAnyArray(row)...))
+		builder.WriteString("\n")
+		if rowIdx == 2 || rowIdx == 5 {
+			builder.WriteString(squaresSeparator + "\n")
+		}
+	}
+	return builder.String()
+}
+
+func read(r io.Reader) (sudoku Sudoku) {
 	scanner := bufio.NewScanner(r)
 
 	for scanner.Scan() {
@@ -35,17 +65,6 @@ func read(r io.Reader) (sudoku [][]int) {
 	}
 
 	return sudoku
-}
-
-func solved(sudoku [][]int) bool {
-	for i := 0; i < 9; i++ {
-		for j := 0; j < 9; j++ {
-			if !checkCell(sudoku, i, j) {
-				return false
-			}
-		}
-	}
-	return true
 }
 
 func checkCell(sudoku [][]int, row, column int) bool {
@@ -98,32 +117,11 @@ func cellIntToString(c int) string {
 	return strconv.Itoa(c)
 }
 
-var squaresSeparator = "-------|-------|-------"
-var toAnyArray = func(a []int) (r []any) {
+func toAnyArray(a []int) (r []any) {
 	for _, v := range a {
 		r = append(r, cellIntToString(v))
 	}
 	return
-}
-
-func PrettyPrint(sudoku [][]int) string {
-	builder := &strings.Builder{}
-	for rowIdx, row := range sudoku {
-		builder.WriteString(fmt.Sprintf(" %v %v %v | %v %v %v | %v %v %v ", toAnyArray(row)...))
-		builder.WriteString("\n")
-		if rowIdx == 2 || rowIdx == 5 {
-			builder.WriteString(squaresSeparator + "\n")
-		}
-	}
-	return builder.String()
-}
-
-func solve(sudoku [][]int) {
-	i, j := getNextBlank(sudoku)
-	if i == -1 && j == -1 {
-		return
-	}
-	solveNext(sudoku, i, j)
 }
 
 func solveNext(sudoku [][]int, row, column int) bool {
