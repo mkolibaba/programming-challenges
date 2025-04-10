@@ -1,4 +1,4 @@
-package main
+package puzzle
 
 import (
 	"bufio"
@@ -10,7 +10,7 @@ import (
 	"strings"
 )
 
-func readFromFile(path string) [][]int {
+func ReadFromFile(path string) [][]int {
 	file, err := os.Open(path)
 	if err != nil {
 		log.Fatal(err)
@@ -106,7 +106,7 @@ var toAnyArray = func(a []int) (r []any) {
 	return
 }
 
-func prettyPrint(sudoku [][]int) string {
+func PrettyPrint(sudoku [][]int) string {
 	builder := &strings.Builder{}
 	for rowIdx, row := range sudoku {
 		builder.WriteString(fmt.Sprintf(" %v %v %v | %v %v %v | %v %v %v ", toAnyArray(row)...))
@@ -116,4 +116,41 @@ func prettyPrint(sudoku [][]int) string {
 		}
 	}
 	return builder.String()
+}
+
+func solve(sudoku [][]int) {
+	i, j := getNextBlank(sudoku)
+	if i == -1 && j == -1 {
+		return
+	}
+	solveNext(sudoku, i, j)
+}
+
+func solveNext(sudoku [][]int, row, column int) bool {
+	for possibleValue := 1; possibleValue <= 9; possibleValue++ {
+		sudoku[row][column] = possibleValue
+		if checkCell(sudoku, row, column) {
+			i, j := getNextBlank(sudoku)
+			if i == -1 && j == -1 {
+				return true
+			}
+			if solveNext(sudoku, i, j) {
+				return true
+			}
+		}
+	}
+	// ни одно из значений не подходит
+	sudoku[row][column] = 0
+	return false
+}
+
+func getNextBlank(sudoku [][]int) (int, int) {
+	for i, row := range sudoku {
+		for j, cell := range row {
+			if cell == 0 {
+				return i, j
+			}
+		}
+	}
+	return -1, -1
 }

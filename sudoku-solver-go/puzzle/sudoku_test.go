@@ -1,10 +1,13 @@
-package main
+package puzzle
 
 import (
 	"testing"
 )
 
-const unsolvedSudoku = `...68..32
+const (
+	unsolvedSudokuPath = "../input/1.txt"
+	solvedSudokuPath   = "../input/1_solved.txt"
+	unsolvedSudoku     = `...68..32
 ..6.74...
 ..395....
 .7....9..
@@ -13,6 +16,7 @@ const unsolvedSudoku = `...68..32
 9........
 .8.4..6..
 .....35..`
+)
 
 var (
 	oneCellMissing    = punchCellsFromSolved(Cell{0, 0})
@@ -24,7 +28,7 @@ type Cell struct {
 }
 
 func TestReadFromFile(t *testing.T) {
-	sudoku := readFromFile("input/1.txt")
+	sudoku := ReadFromFile(unsolvedSudokuPath)
 
 	assertValidSudoku(t, sudoku)
 }
@@ -36,7 +40,7 @@ func TestReadFromString(t *testing.T) {
 }
 
 func TestCheckCell(t *testing.T) {
-	sudoku := readFromFile("input/1_solved.txt")
+	sudoku := ReadFromFile(solvedSudokuPath)
 
 	assertValidSudoku(t, sudoku)
 
@@ -51,7 +55,7 @@ func TestCheckCell(t *testing.T) {
 
 func TestSolved(t *testing.T) {
 	t.Run("check solved sudoku", func(t *testing.T) {
-		sudoku := readFromFile("input/1_solved.txt")
+		sudoku := ReadFromFile(solvedSudokuPath)
 
 		assertValidSudoku(t, sudoku)
 
@@ -84,7 +88,7 @@ func TestSolve(t *testing.T) {
 		},
 		{
 			"solve brand new sudoku",
-			readFromFile("input/1.txt"),
+			ReadFromFile(unsolvedSudokuPath),
 		},
 	}
 
@@ -151,7 +155,7 @@ func assertValidSudoku(t *testing.T, sudoku [][]int) {
 }
 
 func punchCellsFromSolved(cells ...Cell) [][]int {
-	sudoku := readFromFile("input/1_solved.txt")
+	sudoku := ReadFromFile(solvedSudokuPath)
 
 	for _, c := range cells {
 		sudoku[c.row][c.column] = 0
