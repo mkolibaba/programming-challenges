@@ -1,59 +1,52 @@
 package puzzle
 
 import (
-	"bufio"
 	"fmt"
 	"github.com/loov/hrtime"
-	"io"
-	"log"
-	"math/rand"
-	"strconv"
+	"github.com/mkolibaba/programming-challenges/sudoku-solver-go/input"
 	"strings"
 	"time"
 )
 
 const (
-	squaresSeparator   = "-------|-------|-------"
-	kaggleSudokusCount = 1_000_000
+	squaresSeparator = "-------|-------|-------"
 )
+
+var (
+	mapIntToString = map[int]string{
+		0: ".", 1: "1", 2: "2", 3: "3", 4: "4",
+		5: "5", 6: "6", 7: "7", 8: "8", 9: "9",
+	}
+)
+
+type Puzzle [][]int
 
 type Sudoku struct {
 	Puzzle      [][]int
+	Parser      input.Parser
 	TimeElapsed time.Duration
 	Moves       int
 	solved      bool
 }
 
 func NewFromFile(filename string) *Sudoku {
-	return read(GetFile(filename))
+	return NewSudoku(input.NewCompactViewFile(filename))
 }
 
-func NewFromString(input string) *Sudoku {
-	return read(strings.NewReader(input))
+func NewFromString(s string) *Sudoku {
+	return NewSudoku(input.NewCompactViewString(s))
 }
 
 func NewRandomFromKaggle() *Sudoku {
-	return NewFromKaggle(rand.Intn(kaggleSudokusCount))
+	return NewSudoku(input.NewKaggle())
 }
 
 func NewFromKaggle(puzzleNo int) *Sudoku {
-	file := GetFile("kaggle-sudoku.csv")
-	scanner := bufio.NewScanner(file)
-	for i := 0; i < puzzleNo; i++ {
-		scanner.Scan()
-	}
-	quiz := strings.Split(scanner.Text(), ",")[0]
-	if len(quiz) != 9*9 {
-		log.Fatalf("kaggle puzzle No %d invalid", puzzleNo)
-	}
-	var sudoku = make([][]int, 9)
-	for i := 0; i < len(sudoku); i++ {
-		sudoku[i] = make([]int, 9)
-		for j, v := range strings.Split(quiz[i*9:i*9+9], "") {
-			sudoku[i][j] = cellStringToInt(v)
-		}
-	}
-	return &Sudoku{Puzzle: sudoku}
+	return NewSudoku(input.NewKaggleN(puzzleNo))
+}
+
+func NewSudoku(parser input.Parser) *Sudoku {
+	return &Sudoku{Puzzle: parser.Parse(), Parser: parser}
 }
 
 func (s *Sudoku) Solve() {
@@ -86,29 +79,14 @@ func (s *Sudoku) IsSolved() bool {
 
 func (s *Sudoku) String() string {
 	builder := &strings.Builder{}
-	for rowIdx, row := range s.Puzzle {
-		builder.WriteString(fmt.Sprintf(" %v %v %v | %v %v %v | %v %v %v ", toAnyArray(row)...))
+	for rowIdx, _ := range s.Puzzle {
+		builder.WriteString(fmt.Sprintf(" %s %s %s | %s %s %s | %s %s %s ", s.getRowStringRepresentation(rowIdx)...))
 		builder.WriteString("\n")
 		if rowIdx == 2 || rowIdx == 5 {
 			builder.WriteString(squaresSeparator + "\n")
 		}
 	}
 	return builder.String()
-}
-
-func read(r io.Reader) *Sudoku {
-	var sudoku [][]int
-	scanner := bufio.NewScanner(r)
-
-	for scanner.Scan() {
-		var row []int
-		for _, v := range strings.Split(scanner.Text(), "") {
-			row = append(row, cellStringToInt(v))
-		}
-		sudoku = append(sudoku, row)
-	}
-
-	return &Sudoku{Puzzle: sudoku}
 }
 
 func checkCell(sudoku [][]int, row, column int) bool {
@@ -146,28 +124,6 @@ func checkCell(sudoku [][]int, row, column int) bool {
 	return true
 }
 
-func cellStringToInt(s string) (c int) {
-	if s == "." {
-		return 0
-	}
-	c, _ = strconv.Atoi(s)
-	return
-}
-
-func cellIntToString(c int) string {
-	if c == 0 {
-		return "."
-	}
-	return strconv.Itoa(c)
-}
-
-func toAnyArray(a []int) (r []any) {
-	for _, v := range a {
-		r = append(r, cellIntToString(v))
-	}
-	return
-}
-
 func (s *Sudoku) solveNext(row, column int) bool {
 	for possibleValue := 1; possibleValue <= 9; possibleValue++ {
 		s.Puzzle[row][column] = possibleValue
@@ -196,4 +152,13 @@ func getNextBlank(sudoku [][]int) (int, int) {
 		}
 	}
 	return -1, -1
+}
+
+func (s *Sudoku) getRowStringRepresentation(n int) []any {
+	row := s.Puzzle[n]
+	result := make([]any, len(row))
+	for i, v := range row {
+		result[i] = mapIntToString[v]
+	}
+	return result
 }

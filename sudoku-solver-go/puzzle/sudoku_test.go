@@ -111,6 +111,7 @@ func TestSolvedCorrectly(t *testing.T) {
 func BenchmarkSolve(b *testing.B) {
 	for b.Loop() {
 		sudoku := puzzle.NewFromString(unsolvedSudoku)
+		b.ResetTimer() // не учитываем парсинг
 		sudoku.Solve()
 	}
 }
