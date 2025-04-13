@@ -15,6 +15,7 @@ type Kaggle struct {
 	puzzleNo int
 }
 
+// https://www.kaggle.com/datasets/bryanpark/sudoku?resource=download
 func NewKaggle() *Kaggle {
 	return &Kaggle{puzzleNo: rand.Intn(kaggleSudokusCount)}
 }

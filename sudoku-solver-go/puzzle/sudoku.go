@@ -51,30 +51,12 @@ func NewSudoku(parser input.Parser) *Sudoku {
 
 func (s *Sudoku) Solve() {
 	start := hrtime.Now()
-	// start
-	i, j := getNextBlank(s.Puzzle)
-	if i == -1 && j == -1 {
-		return
-	}
-	s.solveNext(i, j)
-	// end
+	s.solved = s.backtrack()
 	s.TimeElapsed = hrtime.Since(start)
 }
 
 func (s *Sudoku) IsSolved() bool {
-	if s.solved {
-		return true
-	}
-
-	for i := 0; i < 9; i++ {
-		for j := 0; j < 9; j++ {
-			if !checkCell(s.Puzzle, i, j) {
-				return false
-			}
-		}
-	}
-	s.solved = true
-	return true
+	return s.solved
 }
 
 func (s *Sudoku) String() string {
@@ -89,23 +71,16 @@ func (s *Sudoku) String() string {
 	return builder.String()
 }
 
-func checkCell(sudoku [][]int, row, column int) bool {
-	value := sudoku[row][column]
+func checkCell(sudoku [][]int, value, row, column int) bool {
+	// TODO: как будто можно убрать
 	// validate cell
 	if value < 1 || value > 9 {
 		return false
 	}
 
-	// validate row
+	// validate row & column
 	for i := 0; i < 9; i++ {
-		if sudoku[row][i] == value && i != column {
-			return false
-		}
-	}
-
-	// validate column
-	for i := 0; i < 9; i++ {
-		if sudoku[i][column] == value && i != row {
+		if sudoku[row][i] == value || sudoku[i][column] == value {
 			return false
 		}
 	}
@@ -115,7 +90,7 @@ func checkCell(sudoku [][]int, row, column int) bool {
 	squareColumnStart := column / 3 * 3
 	for i := squareRowStart; i < squareRowStart+3; i++ {
 		for j := squareColumnStart; j < squareColumnStart+3; j++ {
-			if sudoku[i][j] == value && i != row && j != column {
+			if sudoku[i][j] == value {
 				return false
 			}
 		}
@@ -124,34 +99,26 @@ func checkCell(sudoku [][]int, row, column int) bool {
 	return true
 }
 
-func (s *Sudoku) solveNext(row, column int) bool {
-	for possibleValue := 1; possibleValue <= 9; possibleValue++ {
-		s.Puzzle[row][column] = possibleValue
-		s.Moves++
-		if checkCell(s.Puzzle, row, column) {
-			i, j := getNextBlank(s.Puzzle)
-			if i == -1 && j == -1 {
-				return true
-			}
-			if s.solveNext(i, j) {
-				return true
-			}
-		}
-	}
-	// ни одно из значений не подходит
-	s.Puzzle[row][column] = 0
-	return false
-}
-
-func getNextBlank(sudoku [][]int) (int, int) {
-	for i, row := range sudoku {
-		for j, cell := range row {
-			if cell == 0 {
-				return i, j
+func (s *Sudoku) backtrack() bool {
+	for row := 0; row < 9; row++ {
+		for column := 0; column < 9; column++ {
+			if s.Puzzle[row][column] == 0 {
+				for possibleValue := 1; possibleValue <= 9; possibleValue++ {
+					if checkCell(s.Puzzle, possibleValue, row, column) {
+						s.Puzzle[row][column] = possibleValue
+						s.Moves++
+						if s.backtrack() {
+							return true
+						}
+					}
+				}
+				// ни одно из значений не подходит
+				s.Puzzle[row][column] = 0
+				return false
 			}
 		}
 	}
-	return -1, -1
+	return true
 }
 
 func (s *Sudoku) getRowStringRepresentation(n int) []any {
