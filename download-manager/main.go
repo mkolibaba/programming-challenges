@@ -74,21 +74,21 @@ func (m Model) View() string {
 	for _, d := range m.Downloads {
 		var s string
 		switch d.Status {
-		case InProcess:
+		case InProgress:
 			s = fmt.Sprintf(
-				"%s Downloading %s (%s / %s)",
-				m.spinner.View(), d.Name, d.DownloadedHumanized(), d.SizeHumanized(),
+				InProgressTemplate,
+				m.spinner.View(), d.Name, d.DurationHumanized(), d.SpeedHumanized(), d.DownloadedHumanized(), d.SizeHumanized(),
 			)
 		case Done:
 			s = fmt.Sprintf(
-				"✅ Downloaded %s (total: %s)",
-				d.Name, d.SizeHumanized(),
+				DoneTemplate,
+				d.Name, d.DurationHumanized(), d.SpeedHumanized(), d.SizeHumanized(),
 			)
 		}
 		lines = append(lines, s)
 	}
 
-	str := lipgloss.JoinVertical(lipgloss.Top, lines...)
+	str := lipgloss.JoinVertical(lipgloss.Left, lines...)
 	if m.quitting {
 		return str + "\n"
 	}
@@ -111,3 +111,13 @@ type Model struct {
 }
 
 type ErrMsg error
+
+var InProgressTemplate = `%s Downloading %s
+  ⌚ Duration: %s
+  🕑 Speed: %s
+  💾 Total: %s / %s`
+
+var DoneTemplate = `✅ Downloaded %s
+  ⌚ Duration: %s
+  🕑 Speed: %s
+  💾 Total: %s`
