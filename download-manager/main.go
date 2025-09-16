@@ -25,7 +25,7 @@ func main() {
 func initialModel() Model {
 	return Model{
 		spinner:   spinner.New(spinner.WithSpinner(spinner.Globe)),
-		Downloads: []*Download{NewDownload(link), NewDownload(link2)},
+		Downloads: []*Download{NewDownload(link, WithLimit(500*1024)), NewDownload(link2, WithLimit(224*1024))},
 	}
 }
 
@@ -114,10 +114,10 @@ type ErrMsg error
 
 var InProgressTemplate = `%s Downloading %s
   ⌚ Duration: %s
-  🕑 Speed: %s
+  🐢 Speed: %s
   💾 Total: %s / %s`
 
 var DoneTemplate = `✅ Downloaded %s
   ⌚ Duration: %s
-  🕑 Speed: %s
+  🐢 Speed: %s
   💾 Total: %s`

@@ -29,10 +29,23 @@ type Download struct {
 	Status     Status
 	Start      time.Time
 	Finish     time.Time
+	Limit      float64
 }
 
-func NewDownload(URL string) *Download {
-	return &Download{URL: URL}
+type Option func(*Download)
+
+func WithLimit(limit int64) Option {
+	return func(d *Download) {
+		d.Limit = float64(limit)
+	}
+}
+
+func NewDownload(URL string, options ...Option) *Download {
+	d := &Download{URL: URL}
+	for _, option := range options {
+		option(d)
+	}
+	return d
 }
 
 func (d *Download) Run() tea.Msg {
@@ -71,8 +84,12 @@ func (d *Download) Run() tea.Msg {
 
 	// Download
 	d.Start = time.Now()
-	chunkSize := int64(128 * 1024) // 128 KB
+	chunkSize := int64(32 * 1024) // 32 K
 	for {
+		if d.Limit > 0 && d.Speed() > d.Limit {
+			continue
+		}
+
 		n, err := io.CopyN(file, resp.Body, chunkSize)
 		if n > 0 {
 			d.Downloaded += n
@@ -91,16 +108,19 @@ func (d *Download) Run() tea.Msg {
 }
 
 func (d *Download) SizeHumanized() string {
-	return humanizeSize(d.Size)
+	return humanizeSize(float64(d.Size))
 }
 
 func (d *Download) DownloadedHumanized() string {
-	return humanizeSize(d.Downloaded)
+	return humanizeSize(float64(d.Downloaded))
+}
+
+func (d *Download) Speed() float64 {
+	return float64(d.Downloaded) / d.Duration().Seconds()
 }
 
 func (d *Download) SpeedHumanized() string {
-	speed := float64(d.Downloaded) / d.Duration().Seconds()
-	return fmt.Sprintf("%s/s", humanizeSizeFloat64(speed))
+	return fmt.Sprintf("%s/s", humanizeSize(d.Speed()))
 }
 
 func (d *Download) Duration() time.Duration {
@@ -115,24 +135,21 @@ func (d *Download) Duration() time.Duration {
 
 func (d *Download) DurationHumanized() string {
 	duration := d.Duration()
-	return fmt.Sprintf(
-		"%02d:%02d:%02d", int64(duration.Hours()), int64(duration.Minutes()), int64(duration.Seconds()),
-	)
+	hours := int64(duration.Hours())
+	minutes := int64(duration.Minutes()) % 60
+	seconds := int64(duration.Seconds()) % 60
+	return fmt.Sprintf("%02d:%02d:%02d", hours, minutes, seconds)
 }
 
-func humanizeSize(size int64) string {
-	return humanizeSizeFloat64(float64(size))
-}
-
-func humanizeSizeFloat64(size float64) string {
+func humanizeSize(size float64) string {
 	if size < 1024 {
 		return fmt.Sprintf("%.2f B", size)
 	}
 	if size < 1024*1024 {
-		return fmt.Sprintf("%.2f K", size/1024)
+		return fmt.Sprintf("%.2f KB", size/1024)
 	}
 	if size < 1024*1024*1024 {
-		return fmt.Sprintf("%.2f M", size/float64(1024*1024))
+		return fmt.Sprintf("%.2f MB", size/float64(1024*1024))
 	}
-	return fmt.Sprintf("%.2f G", size/float64(1024*1024*1024))
+	return fmt.Sprintf("%.2f GB", size/float64(1024*1024*1024))
 }
