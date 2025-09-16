@@ -4,6 +4,7 @@ version: '3'
 
 tasks:
   run:
+    silent: true
     cmds:
       - rm -rf downloads/
       - go run .

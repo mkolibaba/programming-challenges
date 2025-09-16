@@ -25,7 +25,7 @@ func main() {
 func initialModel() Model {
 	return Model{
 		spinner:   spinner.New(spinner.WithSpinner(spinner.Globe)),
-		Downloads: []*Download{NewDownload(link, WithLimit(500*1024)), NewDownload(link2, WithLimit(224*1024))},
+		Downloads: []*Download{NewDownload(link), NewDownload(link2)},
 	}
 }
 
@@ -58,6 +58,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case TickMsg:
 		return m, doTick(100 * time.Millisecond)
 
+	case DoneMsg:
+		for _, d := range m.Downloads {
+			if d.Status != Done {
+				return m, nil
+			}
+		}
+		m.done = true
+		return m, tea.Quit
+
 	default:
 		var cmd tea.Cmd
 		m.spinner, cmd = m.spinner.Update(msg)
@@ -77,21 +86,22 @@ func (m Model) View() string {
 		case InProgress:
 			s = fmt.Sprintf(
 				InProgressTemplate,
-				m.spinner.View(), d.Name, d.DurationHumanized(), d.SpeedHumanized(), d.DownloadedHumanized(), d.SizeHumanized(),
+				m.spinner.View(), d.Name, d.DurationHumanized(), d.SpeedHumanized(), d.Downloaded, d.Size,
 			)
 		case Done:
-			s = fmt.Sprintf(
-				DoneTemplate,
-				d.Name, d.DurationHumanized(), d.SpeedHumanized(), d.SizeHumanized(),
-			)
+			s = fmt.Sprintf(DoneTemplate, d.Name, d.DurationHumanized(), d.SpeedHumanized(), d.Size)
 		}
 		lines = append(lines, s)
 	}
 
-	str := lipgloss.JoinVertical(lipgloss.Left, lines...)
-	if m.quitting {
-		return str + "\n"
+	if m.done {
+		lines = append(lines, "🐣 All downloads completed successfully!\n")
 	}
+	if m.quitting {
+		lines = append(lines, "\n")
+	}
+
+	str := lipgloss.JoinVertical(lipgloss.Left, lines...)
 	return str
 }
 
@@ -108,9 +118,12 @@ type Model struct {
 	quitting  bool
 	err       error
 	Downloads []*Download
+	done      bool
 }
 
 type ErrMsg error
+
+type DoneMsg struct{}
 
 var InProgressTemplate = `%s Downloading %s
   ⌚ Duration: %s

@@ -24,19 +24,19 @@ const (
 type Download struct {
 	URL        string
 	Name       string
-	Size       int64
-	Downloaded int64
+	Size       Size
+	Downloaded Size
 	Status     Status
 	Start      time.Time
 	Finish     time.Time
-	Limit      float64
+	Limit      Size
 }
 
 type Option func(*Download)
 
-func WithLimit(limit int64) Option {
+func WithLimit(limit Size) Option {
 	return func(d *Download) {
-		d.Limit = float64(limit)
+		d.Limit = limit
 	}
 }
 
@@ -64,10 +64,11 @@ func (d *Download) Run() tea.Msg {
 
 	// Get size
 	if l := resp.Header.Get("Content-Length"); l != "" { // TODO: что будет, если хедера нет?
-		d.Size, err = strconv.ParseInt(l, 10, 64)
+		sz, err := strconv.ParseInt(l, 10, 64)
 		if err != nil {
 			return ErrMsg(fmt.Errorf("parse content-length header: %w", err))
 		}
+		d.Size = Size(sz)
 	}
 
 	// Create downloads folder
@@ -92,7 +93,7 @@ func (d *Download) Run() tea.Msg {
 
 		n, err := io.CopyN(file, resp.Body, chunkSize)
 		if n > 0 {
-			d.Downloaded += n
+			d.Downloaded += Size(n)
 		}
 		if err != nil {
 			if err == io.EOF {
@@ -104,23 +105,15 @@ func (d *Download) Run() tea.Msg {
 		}
 	}
 
-	return nil
+	return DoneMsg{}
 }
 
-func (d *Download) SizeHumanized() string {
-	return humanizeSize(float64(d.Size))
-}
-
-func (d *Download) DownloadedHumanized() string {
-	return humanizeSize(float64(d.Downloaded))
-}
-
-func (d *Download) Speed() float64 {
-	return float64(d.Downloaded) / d.Duration().Seconds()
+func (d *Download) Speed() Size {
+	return Size(float64(d.Downloaded) / d.Duration().Seconds())
 }
 
 func (d *Download) SpeedHumanized() string {
-	return fmt.Sprintf("%s/s", humanizeSize(d.Speed()))
+	return fmt.Sprintf("%s/s", d.Speed())
 }
 
 func (d *Download) Duration() time.Duration {
@@ -139,17 +132,4 @@ func (d *Download) DurationHumanized() string {
 	minutes := int64(duration.Minutes()) % 60
 	seconds := int64(duration.Seconds()) % 60
 	return fmt.Sprintf("%02d:%02d:%02d", hours, minutes, seconds)
-}
-
-func humanizeSize(size float64) string {
-	if size < 1024 {
-		return fmt.Sprintf("%.2f B", size)
-	}
-	if size < 1024*1024 {
-		return fmt.Sprintf("%.2f KB", size/1024)
-	}
-	if size < 1024*1024*1024 {
-		return fmt.Sprintf("%.2f MB", size/float64(1024*1024))
-	}
-	return fmt.Sprintf("%.2f GB", size/float64(1024*1024*1024))
 }
