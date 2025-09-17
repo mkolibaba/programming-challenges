@@ -1,0 +1,12 @@
+{
+  "items": [
+    {
+      "url": "https://github.com/portapps/postman-portable/releases/download/11.62.7-64/postman-portable-win64-11.62.7-64-setup.exe",
+      "limit": "5MB"
+    },
+    {
+      "url": "https://github.com/pocketbase/pocketbase/releases/download/v0.30.0/pocketbase_0.30.0_windows_amd64.zip",
+      "limit": "1MB"
+    }
+  ]
+}

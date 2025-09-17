@@ -1,31 +1,40 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
-	"go.uber.org/zap"
 	"time"
 )
 
-const link = "https://github.com/portapps/postman-portable/releases/download/11.62.7-64/postman-portable-win64-11.62.7-64-setup.exe"
-const link2 = "https://github.com/pocketbase/pocketbase/releases/download/v0.30.0/pocketbase_0.30.0_windows_amd64.zip"
-
 func main() {
-	logger := zap.Must(zap.NewDevelopment()).Sugar()
+	listPath := flag.String("l", "", "Path of list files to download")
+	flag.Parse()
 
-	m := initialModel()
+	if *listPath == "" {
+		fmt.Println("You must specify a path to a list of files to download")
+		return
+	}
+
+	downloads, err := FromList(*listPath)
+	if err != nil {
+		fmt.Printf("Error: %v", err)
+		return
+	}
+
+	m := initialModel(downloads)
 	p := tea.NewProgram(m)
 	if _, err := p.Run(); err != nil {
-		logger.Fatalf("error during program execution: %v", err)
+		fmt.Printf("error during program execution: %v", err)
 	}
 }
 
-func initialModel() Model {
+func initialModel(downloads []*Download) Model {
 	return Model{
 		spinner:   spinner.New(spinner.WithSpinner(spinner.Globe)),
-		Downloads: []*Download{NewDownload(link, WithLimit(5*Megabyte)), NewDownload(link2, WithLimit(1*Megabyte))},
+		Downloads: downloads,
 	}
 }
 

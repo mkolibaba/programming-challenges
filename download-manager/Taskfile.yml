@@ -7,4 +7,4 @@ tasks:
     silent: true
     cmds:
       - rm -rf downloads/
-      - go run .
+      - go run . -l=list-example.json
