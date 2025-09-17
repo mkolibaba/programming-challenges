@@ -12,12 +12,16 @@ import (
 	"time"
 )
 
-const downloadsFolder = "downloads"
+const (
+	downloadsFolder = "downloads"
+	chunkSize       = int64(32 * 1000)
+)
 
 type Status int8
 
 const (
-	InProgress Status = iota
+	Fetching Status = iota
+	InProgress
 	Done
 )
 
@@ -84,8 +88,8 @@ func (d *Download) Run() tea.Msg {
 	defer file.Close()
 
 	// Download
+	d.Status = InProgress
 	d.Start = time.Now()
-	chunkSize := int64(32 * 1024) // 32 K
 	for {
 		if d.Limit > 0 && d.Speed() > d.Limit {
 			continue
@@ -118,6 +122,8 @@ func (d *Download) SpeedHumanized() string {
 
 func (d *Download) Duration() time.Duration {
 	switch d.Status {
+	case Fetching:
+		return 0
 	case InProgress:
 		return time.Now().Sub(d.Start)
 	case Done:

@@ -25,7 +25,7 @@ func main() {
 func initialModel() Model {
 	return Model{
 		spinner:   spinner.New(spinner.WithSpinner(spinner.Globe)),
-		Downloads: []*Download{NewDownload(link), NewDownload(link2)},
+		Downloads: []*Download{NewDownload(link, WithLimit(5*Megabyte)), NewDownload(link2, WithLimit(1*Megabyte))},
 	}
 }
 
@@ -83,6 +83,8 @@ func (m Model) View() string {
 	for _, d := range m.Downloads {
 		var s string
 		switch d.Status {
+		case Fetching:
+			s = fmt.Sprintf("%s Fetching %s", m.spinner.View(), d.URL)
 		case InProgress:
 			s = fmt.Sprintf(
 				InProgressTemplate,
